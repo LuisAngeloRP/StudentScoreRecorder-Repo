@@ -3,12 +3,12 @@ import pandas as pd
 import os
 
 # Obtener la lista de archivos de la carpeta cursos
-archivos_cursos = os.listdir("cursos")
+archivos_cursos = os.listdir("cursos_old")
 
 # Función para leer el archivo de alumnos de un curso seleccionado
 @st.cache_data
 def leer_alumnos_curso(curso):
-    ruta_archivo = os.path.join("cursos", curso)
+    ruta_archivo = os.path.join("cursos_old", curso)
     with open(ruta_archivo, "r") as file:
         estudiantes = []
         for line in file:
