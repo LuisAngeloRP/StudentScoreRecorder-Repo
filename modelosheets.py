@@ -29,7 +29,7 @@ def tabla_resumen_curso_individual(nombre_curso):
     
     # Obtener todas las sesiones guardadas para el curso
     conn = st.connection(nombre_curso, type=GSheetsConnection)
-    df_sesiones = conn.read(worksheet="sesiones")
+    df_sesiones = conn.read(worksheet="sesiones", ttl=0)
     
     if df_sesiones is None or df_sesiones.empty:
         st.warning("No hay sesiones guardadas en este curso.")
@@ -86,7 +86,7 @@ def sesiones_guardadas_tab():
     conn = st.connection(indice_curso_seleccionado, type=GSheetsConnection)
 
     # Obtener la lista de sesiones guardadas desde el DataFrame de Google Sheets
-    df_sesiones = conn.read(worksheet="sesiones")
+    df_sesiones = conn.read(worksheet="sesiones", ttl=0)
 
     if df_sesiones is None or df_sesiones.empty:
         st.info("No hay sesiones guardadas en este curso.")
@@ -130,7 +130,7 @@ def main():
     st.title("Sistema de Participaciones v1")
 
     # Opciones del sidebar
-    option = st.sidebar.selectbox('Selecciona una opción', ['Crear Curso', 'Nueva Sesión', 'Sesiones Guardadas', 'Tabla de Resumen'], index=1)
+    option = st.sidebar.selectbox('Selecciona una opción', ['Nueva Sesión', 'Sesiones Guardadas', 'Tabla de Resumen'], index=0)
 
     
     if option == 'Nueva Sesión':
@@ -223,7 +223,7 @@ def nueva_sesion_ui():
                 conn.create(worksheet=nombre_sesion_sin_extension, data=datos_sesion)
 
                 # Leer sesiones de Google Sheets
-                df_sesiones = conn.read(worksheet="sesiones", ttl=1)
+                df_sesiones = conn.read(worksheet="sesiones", ttl=0)
                 print("Contenido leído de Google Sheets (antes de agregar nuevas sesiones):")
                 print(df_sesiones)
 
@@ -244,7 +244,7 @@ def nueva_sesion_ui():
                 time.sleep(2)
 
                 # Leer sesiones de Google Sheets nuevamente
-                df_sesiones_actualizado = conn.read(worksheet="sesiones", ttl=1)
+                df_sesiones_actualizado = conn.read(worksheet="sesiones", ttl=0)
                 print("Contenido de Google Sheets después de la actualización:")
                 print(df_sesiones_actualizado)
 
@@ -260,7 +260,7 @@ def obtener_lista_cursos():
 
 def leer_alumnos_curso(curso):
     conn = st.connection(curso, type=GSheetsConnection)
-    df = conn.read(worksheet="alumnos")
+    df = conn.read(worksheet="alumnos", ttl=0)
     
     estudiantes = []
     for nombre_completo in df["alumnos"]:
