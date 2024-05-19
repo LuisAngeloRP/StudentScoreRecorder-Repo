@@ -51,6 +51,7 @@ def leer_alumnos_curso(curso):
     return pd.DataFrame(estudiantes)
 
 # Función para actualizar los puntajes de los alumnos seleccionados
+@st.cache
 def actualizar_puntaje(curso, df_alumnos):
     try:
         ruta_archivo = os.path.join("cursos", curso, "alumnos.txt")
@@ -92,6 +93,22 @@ def crear_curso_ui():
         else:
             st.warning("Ingrese un nombre para el curso.")
 
+def crear_tabla(estudiantes_curso):
+    # Almacenar los puntajes originales
+    puntajes_originales = st.session_state.puntajes.copy()
+    
+    for i, estudiante in enumerate(estudiantes_curso):
+        apellido_nombre = f"{estudiante['Apellido']} {estudiante['Nombre']}"
+        puntaje = puntajes_originales[i]  # Obtener el puntaje original
+        nuevo_puntaje = st.number_input(
+            f"{apellido_nombre}", value=puntaje
+        )
+        # Actualizar los puntajes en st.session_state solo si han cambiado
+        if nuevo_puntaje != puntaje:
+            st.session_state.puntajes[i] = nuevo_puntaje
+            # Si se ha modificado algo en st.number_input, ejecutar st.rerun()
+            st.rerun()
+
 def nueva_sesion_ui():
     st.sidebar.subheader("Agregar Nueva Sesión")
 
@@ -121,6 +138,10 @@ def nueva_sesion_ui():
     # Obtener los alumnos del curso seleccionado
     df_alumnos = leer_alumnos_curso(curso_seleccionado)
 
+    # Inicializar st.session_state.puntajes si no está inicializado
+    if 'puntajes' not in st.session_state:
+        st.session_state.puntajes = df_alumnos['Puntaje'].tolist()
+
     # Reorganizar el dataframe para colocar la columna "Seleccionado" al principio
     df_alumnos = df_alumnos[['Apellido', 'Nombre', 'Puntaje']]
 
@@ -140,6 +161,12 @@ def nueva_sesion_ui():
                 st.markdown(get_binary_file_downloader_html(ruta_archivo, 'Descargar archivo'), unsafe_allow_html=True)
         else:
             st.sidebar.warning(f"¡El archivo '{nombre_archivo}' ya existe en el curso '{curso_seleccionado}'.")
+
+    # Opción para tomar puntajes con la función `crear_tabla`
+    if st.sidebar.checkbox("Tomar puntajes con función crear_tabla"):
+        crear_tabla(df_alumnos.to_dict('records'))  # Pasar los datos de los alumnos a la función crear_tabla
+
+
 
 
 def sesiones_guardadas_tab():
