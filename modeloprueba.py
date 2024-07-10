@@ -5,6 +5,7 @@ import os
 import base64
 from streamlit_gsheets import GSheetsConnection
 
+#prueba
 # Función para obtener la lista de cursos
 def obtener_lista_cursos():
     try:
