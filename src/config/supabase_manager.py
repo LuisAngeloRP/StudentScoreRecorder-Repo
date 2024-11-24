@@ -22,6 +22,169 @@ class SupabaseManager:
         except Exception as e:
             st.error(f"Error al verificar tablas: {str(e)}")
 
+    def crear_sesion(self, codigo_curso: str, nombre: str, puntaje_maximo: int, fecha) -> int:
+        """
+        Crea una nueva sesión
+        Retorna el ID de la sesión creada o None si hay error
+        """
+        try:
+            # Obtener ID del curso
+            curso = self.client.table('cursos')\
+                .select('id')\
+                .eq('codigo', codigo_curso)\
+                .single()\
+                .execute()
+            
+            if not curso.data:
+                st.error(f"No se encontró el curso con código {codigo_curso}")
+                return None
+            
+            # Crear la sesión
+            response = self.client.table('sesiones').insert({
+                'curso_id': curso.data['id'],
+                'nombre': nombre,
+                'puntaje_maximo': puntaje_maximo,
+                'fecha': fecha.strftime('%Y-%m-%d')
+            }).execute()
+            
+            if response.data:
+                return response.data[0]['id']
+            return None
+            
+        except Exception as e:
+            st.error(f"Error al crear sesión: {str(e)}")
+            return None
+
+    def actualizar_puntaje_en_sesion(self, sesion_id: int, apellido: str, nombre: str, puntaje: int) -> bool:
+        """
+        Actualiza el puntaje de un alumno en una sesión específica
+        """
+        try:
+            # Obtener ID del alumno
+            alumno = self.client.table('alumnos')\
+                .select('id')\
+                .eq('apellido', apellido)\
+                .eq('nombre', nombre)\
+                .single()\
+                .execute()
+            
+            if not alumno.data:
+                return False
+                
+            # Verificar si ya existe un puntaje para este alumno en esta sesión
+            puntaje_existente = self.client.table('puntajes')\
+                .select('id')\
+                .eq('sesion_id', sesion_id)\
+                .eq('alumno_id', alumno.data['id'])\
+                .execute()
+                
+            if puntaje_existente.data:
+                # Actualizar puntaje existente
+                self.client.table('puntajes')\
+                    .update({'puntaje': puntaje})\
+                    .eq('id', puntaje_existente.data[0]['id'])\
+                    .execute()
+            else:
+                # Crear nuevo puntaje
+                self.client.table('puntajes').insert({
+                    'sesion_id': sesion_id,
+                    'alumno_id': alumno.data['id'],
+                    'puntaje': puntaje
+                }).execute()
+                
+            return True
+            
+        except Exception as e:
+            print(f"Error al actualizar puntaje: {str(e)}")
+            return False
+
+    def actualizar_puntaje_alumno(self, codigo_curso: str, alumno_apellido: str, alumno_nombre: str, puntaje: int) -> bool:
+        """
+        Actualiza el puntaje de un alumno en la sesión actual
+        """
+        try:
+            # Obtener ID del curso
+            curso = self.client.table('cursos')\
+                .select('id')\
+                .eq('codigo', codigo_curso)\
+                .single()\
+                .execute()
+            
+            if not curso.data:
+                return False
+            
+            # Obtener ID del alumno
+            alumno = self.client.table('alumnos')\
+                .select('id')\
+                .eq('curso_id', curso.data['id'])\
+                .eq('apellido', alumno_apellido)\
+                .eq('nombre', alumno_nombre)\
+                .single()\
+                .execute()
+            
+            if not alumno.data:
+                return False
+            
+            # Verificar si existe una sesión actual
+            sesion_actual = self.client.table('sesiones')\
+                .select('id')\
+                .eq('curso_id', curso.data['id'])\
+                .eq('fecha', datetime.now().strftime('%Y-%m-%d'))\
+                .single()\
+                .execute()
+            
+            # Si no existe sesión actual, crearla
+            if not sesion_actual.data:
+                sesion = self.client.table('sesiones').insert({
+                    'curso_id': curso.data['id'],
+                    'nombre': f'Sesión {datetime.now().strftime("%Y-%m-%d")}',
+                    'fecha': datetime.now().strftime('%Y-%m-%d'),
+                    'puntaje_maximo': 20  # Valor por defecto
+                }).execute()
+                sesion_id = sesion.data[0]['id']
+            else:
+                sesion_id = sesion_actual.data['id']
+            
+            # Actualizar o crear puntaje
+            puntaje_existente = self.client.table('puntajes')\
+                .select('id')\
+                .eq('sesion_id', sesion_id)\
+                .eq('alumno_id', alumno.data['id'])\
+                .single()\
+                .execute()
+            
+            if puntaje_existente.data:
+                # Actualizar puntaje existente
+                self.client.table('puntajes')\
+                    .update({'puntaje': puntaje})\
+                    .eq('id', puntaje_existente.data['id'])\
+                    .execute()
+            else:
+                # Crear nuevo puntaje
+                self.client.table('puntajes').insert({
+                    'sesion_id': sesion_id,
+                    'alumno_id': alumno.data['id'],
+                    'puntaje': puntaje
+                }).execute()
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error al actualizar puntaje: {str(e)}")
+            return False
+
+    def _verificar_tablas(self):
+        """Verifica y crea las tablas necesarias si no existen"""
+        try:
+            response = self.client.table('cursos').select('*').execute()
+            if not response.data:
+                self.client.table('cursos').insert({
+                    'nombre': 'Curso de Ejemplo',
+                    'codigo': 'CURSO101'
+                }).execute()
+        except Exception as e:
+            st.error(f"Error al verificar tablas: {str(e)}")
+
     def obtener_lista_cursos(self):
         """Obtiene la lista de cursos disponibles"""
         try:
@@ -462,3 +625,5 @@ class SupabaseManager:
         except Exception as e:
             st.error(f"Error al eliminar evaluación: {str(e)}")
             return False
+    
+    

@@ -1,9 +1,13 @@
 import streamlit as st
 
-def validar_puntaje_maximo(df, puntaje_maximo):
+import streamlit as st
+import pandas as pd
+
+
+def validar_puntaje_maximo(df: pd.DataFrame, puntaje_maximo: int) -> bool:
     """Valida que ningún puntaje exceda el máximo permitido"""
-    if df["Puntaje"].max() > puntaje_maximo:
-        st.error(f"El puntaje máximo permitido es {puntaje_maximo}. Por favor, corrija los puntajes que excedan este valor.")
+    if df['puntaje'].max() > puntaje_maximo:
+        st.error(f"Error: Algunos puntajes exceden el máximo permitido ({puntaje_maximo})")
         return False
     return True
 
@@ -63,3 +67,4 @@ def generar_reporte_evaluacion(df_resultados):
         'desaprobados': len(df_resultados[df_resultados['Nota'] < 11]),
         'total_alumnos': len(df_resultados)
     }
+

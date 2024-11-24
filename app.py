@@ -1,8 +1,8 @@
+# home.py
 import streamlit as st
 from src.config.supabase_manager import SupabaseManager
-from src.ui.nueva_sesion import nueva_sesion_ui
-from src.ui.sesiones_guardadas import sesiones_guardadas_tab
-from src.ui.tabla_resumen import tabla_resumen_ui
+from src.ui.sesiones import sesiones_ui
+from src.ui.sesion_actual import sesion_actual_ui  # Nueva importación
 from src.ui.evaluaciones import evaluaciones_ui
 from src.ui.importacion import importacion_ui
 
@@ -19,12 +19,11 @@ def main():
     if 'db' not in st.session_state:
         st.session_state.db = SupabaseManager()
     
-    # Menú principal
+    # Menú principal actualizado
     menu_options = {
         "Importar Curso": importacion_ui,
-        "Nueva Sesión": nueva_sesion_ui,
-        "Sesiones Guardadas": sesiones_guardadas_tab,
-        "Tabla de Resumen": tabla_resumen_ui,
+        "Sesiones": sesiones_ui,
+        "Sesión Actual": sesion_actual_ui,  # Nueva opción
         "Evaluaciones": evaluaciones_ui
     }
     
